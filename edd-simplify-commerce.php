@@ -81,8 +81,14 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
          * @since       1.0.0
          * @return      void
          */
-        private function includes() {
-            // Nothing to see here, folks!
+		private function includes() {
+			// Load our custom updater
+			if( !class_exists( 'EDD_LICENSE' ) ) {
+				include( EDD_SIMPLIFY_COMMERCE_DIR . '/includes/libraries/EDD_SL/EDD_License_Handler.php' );
+			}
+
+			// Include the Simplify Commerce library
+			require_once( EDD_SIMPLIFY_COMMERCE_DIR . '/includes/libraries/Simplify/Simplify.php' );
         }
 
 
@@ -95,7 +101,22 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
          */
         private function hooks() {
             // Edit plugin metalinks
-            add_filter( 'plugin_row_meta', array( $this, 'plugin_metalinks' ), null, 2 );
+			add_filter( 'plugin_row_meta', array( $this, 'plugin_metalinks' ), null, 2 );
+
+			// Handle licensing
+			$license = new EDD_License( __FILE__, 'Simplify Commerce Gateway', EDD_SIMPLIFY_COMMERCE_VERSION, 'Daniel J Griffiths' );
+
+			// Register settings
+			add_filter( 'edd_settings_gateways', array( $this, 'settings' ), 1 );
+
+			// Add the gateway
+			add_filter( 'edd_payment_gateways', array( $this, 'register_gateway' ) );
+
+			// Process payment
+			add_action( 'edd_gateway_simplify', array( $this, 'process_payment' ) );
+
+			// Display errors
+			add_action( 'edd_after_cc_fields', array( $this, 'errors_div' ), 999 );
         }
 
 
@@ -155,7 +176,147 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
             }
 
             return $links;
-        }
+		}
+
+
+		/**
+		 * Register settings
+		 *
+		 * @since		1.0.0
+		 * @access		public
+		 * @param		array $settings The existing plugin settings
+		 * @param		array The modified plugin settings array
+		 */
+		public function settings( $settings ) {
+			$new_settings = array(
+				array(
+					'id'	=> 'edd_simplify_commerce_settings',
+					'name'	=> '<strong>' . __( 'Simplify Commerce Settings', 'edd-simplify-commerce' ) . '</strong>',
+					'desc'	=> __( 'Configure your Simplify Commerce settings', 'edd-simplify-commerce' ),
+					'type'	=> 'header'
+
+				),
+				array(
+					'id'	=> 'edd_simplify_commerce_public_key',
+					'name'	=> __( 'API Public Key', 'edd-simplify-commerce' ),
+					'desc'	=> __( 'Enter your Simplify Commerce API Public Key (found <a href="https://www.simplify.com/commerce/app#/account/apiKeys" target="_blank">here</a>)', 'edd-simplify-gateway' ),
+					'type'	=> 'text'
+				),
+				array(
+					'id'	=> 'edd_simplify_commerce_private_key',
+					'name'	=> __( 'API Private Key', 'edd-simplify-commerce' ),
+					'desc'	=> __( 'Enter your Simplify Commerce API Private Key (found <a href="https://www.simplify.com/commerce/app#/account/apiKeys" target="_blank">here</a>)', 'edd-simplify-gateway' ),
+					'type'	=> 'text'
+				)
+			);
+
+			return array_merge( $settings, $new_settings );
+		}
+
+
+		/**
+		 * Register our new gateway
+		 *
+		 * @since		1.0.0
+		 * @access		public
+		 * @param		array $gateways The current gateway list
+		 * @return		array $gateways The updated gateway list
+		 */
+		public function register_gateway( $gateways ) {
+			$gateways['simplify'] = array(
+				'admin_label'		=> 'Simplify Commerce',
+				'checkout_label'	=> __( 'Credit Card', 'edd-simplify-commerce' )
+			);
+
+			return $gateways;
+		}
+
+
+		/**
+		 * Process payment submission
+		 *
+		 * @since		1.0.0
+		 * @access		public
+		 * @param		array $purchase_data The data for a specific purchase
+		 * @global		array $edd_options The EDD options array
+		 * @return		void
+		 */
+		public function process_payment( $purchase_data ) {
+			global $edd_options;
+
+			$errors = edd_get_errors();
+
+			if( !$errors ) {
+				Simplify::$publicKey = $edd_options['edd_simplify_commerce_public_key'];
+				Simplify::$privateKey = $edd_options['edd_simplify_commerce_private_key'];
+
+				try{
+					$amount = number_format( $purchase_data['price'] * 100, 0 );
+
+					$result = Simplify_Payment::createPayment( array(
+						'card'			=> array(
+							'number'		=> $purchase_data['card_info']['card_number'],
+							'expMonth'		=> $purchase_data['card_info']['card_exp_month'],
+							'expYear'		=> date( 'y', $purchase_data['card_info']['card_exp_year'] ),
+							'cvc'			=> $purchase_data['card_info']['card_cvc'],
+							'addressLine1'	=> ( isset( $purchase_data['card_info']['card_address'] ) ? $purchase_data['card_info']['card_address'] : '' ),
+							'addressLine2'	=> ( isset( $purchase_data['card_info']['card_address_2'] ) ? $purchase_data['card_info']['card_address_2'] : '' ),
+							'addressCity'	=> ( isset( $purchase_data['card_info']['card_city'] ) ? $purchase_data['card_info']['card_city'] : '' ),
+							'addressState'	=> ( isset( $purchase_data['card_info']['card_state'] ) ? $purchase_data['card_info']['card_state'] : '' ),
+							'addressZip'	=> ( isset( $purchase_data['card_info']['card_zip'] ) ? $purchase_data['card_info']['card_zip'] : '' ),
+							'name'			=> ( isset( $purchase_data['card_info']['card_name'] ) ? $purchase_data['card_info']['card_name'] : '' ),
+						),
+						'amount'		=> edd_sanitize_amount( $amount ),
+						'currency'		=> $edd_options['currency']
+					) );
+				} catch( Exception $e ) {
+					edd_record_gateway_error( __( 'Simplify Commerce Error', 'edd-simplify-commerce' ), print_r( $e, true ), 0 );
+					edd_set_error( 'card_declined', __( 'Your card was declined!', 'edd-balanced-gateway' ) );
+					edd_send_back_to_checkout( '?payment-mode=' . $purchase_data['post_data']['edd-gateway'] );
+				}
+
+				if( $result->paymentStatus == 'APPROVED' ) {
+					$payment_data = array(
+						'price'			=> $purchase_data['price'],
+						'date'			=> $purchase_data['date'],
+						'user_email'	=> $purchase_data['user_email'],
+						'purchase_key'	=> $purchase_data['purchase_key'],
+						'currency'		=> $edd_options['currency'],
+						'downloads'		=> $purchase_data['downloads'],
+						'cart_details'	=> $purchase_data['cart_details'],
+						'user_info'		=> $purchase_data['user_info'],
+						'status'		=> 'pending'
+					);
+
+					$payment = edd_insert_payment( $payment_data );
+
+					if( $payment ) {
+						edd_insert_payment_note( $payment, sprintf( __( 'Simplify Commerce Transaction ID: %s', 'edd-simplify-commerce' ), $result->id ) );
+						edd_update_payment_status( $payment, 'publish' );
+						edd_send_to_success_page();
+					} else {
+						edd_set_error( 'authorize_error', __( 'Error: Your payment could not be recorded. Please try again.', 'edd-simplify-commerce' ) );
+						edd_send_back_to_checkout( '?payment-mode=' . $purchase_data['post_data']['edd-gateway'] );
+					}
+				} else {
+					wp_die( $result->paymentStatus );
+				}
+			} else {
+				edd_send_back_to_checkout( '?payment-mode=' . $purchase_data['post_data']['edd-gateway'] );
+			}
+		}
+
+
+		/**
+		 * Output form errors
+		 *
+		 * @since		1.0.0
+		 * @access		public
+		 * @return		void
+		 */
+		public function errors_div() {
+			echo '<div id="edd-simplify-errors"></div>';
+		}
     }
 }
 
@@ -168,7 +329,31 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
  * @return      EDD_Simplify_Commerce The one true EDD_Simplify_Commerce
  */
 function EDD_Simplify_Commerce_load() {
-    return EDD_Simplify_Commerce::instance();
+	// We need access to deactivate_plugins() and is_plugin_active()
+	include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+
+	if( !is_plugin_active( 'Easy-Digital-Downloads/easy-digital-downloads.php' ) && !is_plugin_active( 'easy-digital-downloads/easy-digital-downloads.php' ) ) {
+		deactivate_plugins( __FILE__ );
+		unset( $_GET['activate'] );
+
+		// Display notice
+		add_action( 'admin_notices', 'EDD_Simplify_Commerce_missing_edd_notice' );
+	} else {
+	    return EDD_Simplify_Commerce::instance();
+	}
+}
+
+
+/**
+ * We need Easy Digital Downloads... if it isn't present, notify the user!
+ *
+ * @since		1.0.0
+ * @return		void
+ */
+function EDD_Simplify_Commerce_missing_edd_notice() {
+	$active_plugins = get_option( 'active_plugins' );
+	print_r($active_plugins);
+	echo '<div class="error"><p>' . __( 'Simplify Commerce Gateway requires Easy Digital Downloads! Please install it to continue!', 'edd-simplify-commerce' ) . '</p></div>';
 }
 
 
