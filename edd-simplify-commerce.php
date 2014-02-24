@@ -330,25 +330,14 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
  */
 function EDD_Simplify_Commerce_load() {
 	if( !class_exists( 'Easy_Digital_Downloads' ) ) {
-		deactivate_plugins( __FILE__ );
-		unset( $_GET['activate'] );
+        if( !class_exists( 'S214_EDD_Activation' ) ) {
+            require_once( 'includes/class.s214-edd-activation.php' );
+        }
 
-		// Display notice
-		add_action( 'admin_notices', 'EDD_Simplify_Commerce_missing_edd_notice' );
+        $activation = new S214_EDD_Activation( plugin_dir_path( __FILE__ ), basename( __FILE__ ) );
+        $activation = $activation->run();
 	} else {
 	    return EDD_Simplify_Commerce::instance();
 	}
 }
 add_action( 'plugins_loaded', 'EDD_Simplify_Commerce_load' );
-
-/**
- * We need Easy Digital Downloads... if it isn't present, notify the user!
- *
- * @since		1.0.0
- * @return		void
- */
-function EDD_Simplify_Commerce_missing_edd_notice() {
-	$active_plugins = get_option( 'active_plugins' );
-	print_r($active_plugins);
-	echo '<div class="error"><p>' . __( 'Simplify Commerce Gateway requires Easy Digital Downloads! Please install it to continue!', 'edd-simplify-commerce' ) . '</p></div>';
-}
