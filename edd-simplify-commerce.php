@@ -82,11 +82,6 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
          * @return      void
          */
 		private function includes() {
-			// Load our custom updater
-			if( !class_exists( 'EDD_LICENSE' ) ) {
-				include( EDD_SIMPLIFY_COMMERCE_DIR . '/includes/libraries/EDD_SL/EDD_License_Handler.php' );
-			}
-
 			// Include the Simplify Commerce library
 			require_once( EDD_SIMPLIFY_COMMERCE_DIR . '/includes/libraries/Simplify/Simplify.php' );
         }
@@ -103,8 +98,10 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
             // Edit plugin metalinks
 			add_filter( 'plugin_row_meta', array( $this, 'plugin_metalinks' ), null, 2 );
 
-			// Handle licensing
-			$license = new EDD_License( __FILE__, 'Simplify Commerce Gateway', EDD_SIMPLIFY_COMMERCE_VERSION, 'Daniel J Griffiths' );
+            // Handle licensing
+            if( class_exists( 'EDD_License' ) ) {
+                $license = new EDD_License( __FILE__, 'Simplify Commerce Gateway', EDD_SIMPLIFY_COMMERCE_VERSION, 'Daniel J Griffiths' );
+            }
 
 			// Register settings
 			add_filter( 'edd_settings_gateways', array( $this, 'settings' ), 1 );
