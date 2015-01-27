@@ -252,7 +252,7 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
 
 					$result = Simplify_Payment::createPayment( array(
 						'card'			=> array(
-							'number'		=> $purchase_data['card_info']['card_number'],
+							'number'		=> str_replace( ' ', '', $purchase_data['card_info']['card_number'] ),
 							'expMonth'		=> $purchase_data['card_info']['card_exp_month'],
 							'expYear'		=> date( 'y', $purchase_data['card_info']['card_exp_year'] ),
 							'cvc'			=> $purchase_data['card_info']['card_cvc'],
