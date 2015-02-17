@@ -95,9 +95,6 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
          * @return      void
          */
         private function hooks() {
-            // Edit plugin metalinks
-			add_filter( 'plugin_row_meta', array( $this, 'plugin_metalinks' ), null, 2 );
-
             // Handle licensing
             if( class_exists( 'EDD_License' ) ) {
                 $license = new EDD_License( __FILE__, 'Simplify Commerce Gateway', EDD_SIMPLIFY_COMMERCE_VERSION, 'Daniel J Griffiths' );
@@ -148,32 +145,6 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
                 load_plugin_textdomain( 'edd-simplify-commerce', false, $lang_dir );
             }
         }
-
-
-        /**
-         * Modify plugin metalinks
-         *
-         * @access      public
-         * @since       1.0.0
-         * @param       array $links The current links array
-         * @param       string $file A specific plugin table entry
-         * @return      array $links The modified links array
-         */
-        public function plugin_metalinks( $links, $file ) {
-            if( $file == plugin_basename( __FILE__ ) ) {
-                $help_link = array(
-                    '<a href="http://support.ghost1227.com/forums/forum/plugin-support/edd-simplify-commerce/" target="_blank">' . __( 'Support Forum', 'edd-simplify-commerce' ) . '</a>'
-                );
-
-                $docs_link = array(
-                    '<a href="http://support.ghost1227.com/section/edd-simplify-commerce/" target="_blank">' . __( 'Docs', 'edd-simplify-commerce' ) . '</a>'
-                );
-
-                $links = array_merge( $links, $help_link, $docs_link );
-            }
-
-            return $links;
-		}
 
 
 		/**
