@@ -301,6 +301,7 @@ function EDD_Simplify_Commerce_load() {
 
         $activation = new S214_EDD_Activation( plugin_dir_path( __FILE__ ), basename( __FILE__ ) );
         $activation = $activation->run();
+	    return EDD_Simplify_Commerce::instance();
 	} else {
 	    return EDD_Simplify_Commerce::instance();
 	}
