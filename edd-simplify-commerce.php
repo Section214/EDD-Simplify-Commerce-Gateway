@@ -127,7 +127,7 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
         public function load_textdomain() {
             // Set filter for language directory
             $lang_dir = dirname( plugin_basename( __FILE__ ) ) . '/languages/';
-            $lang_dir = apply_filters( 'EDD_Simplify_Commerce_language_directory', $lang_dir );
+            $lang_dir = apply_filters( 'edd_simplify_commerce_language_directory', $lang_dir );
 
             // Traditional WordPress plugin locale filter
             $locale     = apply_filters( 'plugin_locale', get_locale(), '' );
