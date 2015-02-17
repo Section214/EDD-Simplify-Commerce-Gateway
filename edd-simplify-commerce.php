@@ -235,17 +235,14 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
 		 * @since		1.0.0
 		 * @access		public
 		 * @param		array $purchase_data The data for a specific purchase
-		 * @global		array $edd_options The EDD options array
 		 * @return		void
 		 */
 		public function process_payment( $purchase_data ) {
-			global $edd_options;
-
 			$errors = edd_get_errors();
 
 			if( !$errors ) {
-				Simplify::$publicKey = $edd_options['edd_simplify_commerce_public_key'];
-				Simplify::$privateKey = $edd_options['edd_simplify_commerce_private_key'];
+				Simplify::$publicKey = trim( edd_get_option( 'edd_simplify_commerce_public_key', '' ) );
+				Simplify::$privateKey = trim( edd_get_option( 'edd_simplify_commerce_private_key', '' ) );
 
 				try{
 					$amount = number_format( $purchase_data['price'] * 100, 0 );
@@ -264,7 +261,7 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
 							'name'			=> ( isset( $purchase_data['card_info']['card_name'] ) ? $purchase_data['card_info']['card_name'] : '' ),
 						),
 						'amount'		=> edd_sanitize_amount( $amount ),
-						'currency'		=> $edd_options['currency']
+						'currency'		=> edd_get_option( 'currency', 'USD' );
 					) );
 				} catch( Exception $e ) {
 					edd_record_gateway_error( __( 'Simplify Commerce Error', 'edd-simplify-commerce' ), print_r( $e, true ), 0 );
@@ -278,7 +275,7 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
 						'date'			=> $purchase_data['date'],
 						'user_email'	=> $purchase_data['user_email'],
 						'purchase_key'	=> $purchase_data['purchase_key'],
-						'currency'		=> $edd_options['currency'],
+						'currency'		=> edd_get_option( 'currency', 'USD' ),
 						'downloads'		=> $purchase_data['downloads'],
 						'cart_details'	=> $purchase_data['cart_details'],
 						'user_info'		=> $purchase_data['user_info'],
