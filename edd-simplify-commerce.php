@@ -3,7 +3,7 @@
  * Plugin Name:     Easy Digital Downloads - Simplify Commerce Gateway
  * Plugin URI:      https://easydigitaldownloads.com/extensions/simplify-commerce-gateway
  * Description:     Adds a payment gateway for Simplify Commerce to Easy Digital Downloads
- * Version:         1.0.1
+ * Version:         1.0.2
  * Author:          Daniel J Griffiths
  * Author URI:      http://section214.com
  * Text Domain:     edd-simplify-commerce
@@ -64,7 +64,7 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
          */
         private function setup_constants() {
             // Plugin version
-            define( 'EDD_SIMPLIFY_COMMERCE_VERSION', '1.0.1' );
+            define( 'EDD_SIMPLIFY_COMMERCE_VERSION', '1.0.2' );
 
             // Plugin path
             define( 'EDD_SIMPLIFY_COMMERCE_DIR', plugin_dir_path( __FILE__ ) );
@@ -232,7 +232,7 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
 							'name'			=> ( isset( $purchase_data['card_info']['card_name'] ) ? $purchase_data['card_info']['card_name'] : '' ),
 						),
 						'amount'		=> edd_sanitize_amount( $amount ),
-						'currency'		=> edd_get_option( 'currency', 'USD' );
+						'currency'		=> edd_get_option( 'currency', 'USD' )
 					) );
 				} catch( Exception $e ) {
 					edd_record_gateway_error( __( 'Simplify Commerce Error', 'edd-simplify-commerce' ), print_r( $e, true ), 0 );
