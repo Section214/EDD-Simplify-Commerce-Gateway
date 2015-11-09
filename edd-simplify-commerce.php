@@ -3,7 +3,7 @@
  * Plugin Name:     Easy Digital Downloads - Simplify Commerce Gateway
  * Plugin URI:      https://easydigitaldownloads.com/extensions/simplify-commerce-gateway
  * Description:     Adds a payment gateway for Simplify Commerce to Easy Digital Downloads
- * Version:         1.0.0
+ * Version:         1.0.1
  * Author:          Daniel J Griffiths
  * Author URI:      http://section214.com
  * Text Domain:     edd-simplify-commerce
@@ -64,7 +64,7 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
          */
         private function setup_constants() {
             // Plugin version
-            define( 'EDD_SIMPLIFY_COMMERCE_VERSION', '1.0.0' );
+            define( 'EDD_SIMPLIFY_COMMERCE_VERSION', '1.0.1' );
 
             // Plugin path
             define( 'EDD_SIMPLIFY_COMMERCE_DIR', plugin_dir_path( __FILE__ ) );
@@ -222,7 +222,7 @@ if( !class_exists( 'EDD_Simplify_Commerce' ) ) {
 						'card'			=> array(
 							'number'		=> str_replace( ' ', '', $purchase_data['card_info']['card_number'] ),
 							'expMonth'		=> $purchase_data['card_info']['card_exp_month'],
-							'expYear'		=> date( 'y', $purchase_data['card_info']['card_exp_year'] ),
+							'expYear'		=> substr( $purchase_data['card_info']['card_exp_year'], -2 ),
 							'cvc'			=> $purchase_data['card_info']['card_cvc'],
 							'addressLine1'	=> ( isset( $purchase_data['card_info']['card_address'] ) ? $purchase_data['card_info']['card_address'] : '' ),
 							'addressLine2'	=> ( isset( $purchase_data['card_info']['card_address_2'] ) ? $purchase_data['card_info']['card_address_2'] : '' ),
