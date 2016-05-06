@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:     Easy Digital Downloads - Simplify Commerce Gateway
- * Plugin URI:      https://easydigitaldownloads.com/extensions/simplify-commerce-gateway
+ * Plugin URI:      https://wordpress.org/plugins/edd-simplify-commerce-gateway
  * Description:     Adds a payment gateway for Simplify Commerce to Easy Digital Downloads
  * Version:         1.0.3
  * Author:          Daniel J Griffiths
